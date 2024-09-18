@@ -1,49 +1,69 @@
-import cv2
-import mediapipe as mp
+import requests
+from email.message import EmailMessage
+from smtplib import SMTP_SSL
 
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
+IPINFO_TOKEN = '0cf1b52c906317'
 
-cap = cv2.VideoCapture(1)
+IP_ADDRESS = '27.34.49.83'
 
-if not cap.isOpened():
-    print("Error: Could not open webcam.")
-    exit()
-
-# Set up the Hands solution
-with mp_hands.Hands(
-        static_image_mode=False,
-        max_num_hands=2,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5) as hands:
+def get_location_from_ip(ip_address):
+    url = f"https://ipinfo.io/{ip_address}?token={IPINFO_TOKEN}"
+    response = requests.get(url)
+    data = response.json()
     
-    while cap.isOpened():
-        ret, frame = cap.read()
-        
-        if not ret:
-            print("Error: Could not read frame from webcam.")
-            break
-        
-        print("Frame captured successfully.")
-        frame = cv2.flip(frame, 1)
-        # Convert the frame color from BGR (OpenCV) to RGB (MediaPipe)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        # Process the frame with MediaPipe Hands
-        results = hands.process(frame_rgb)
-        
-        # Draw hand landmarks on the original frame (BGR)
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-        
-        # Display the original frame in a window
-        cv2.imshow("Hand Gesture Recognition", frame)
-        
-        # Exit if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    location = data.get('loc', '')
+    city = data.get('city', 'Unknown')
+    region = data.get('region', 'Unknown')
+    country = data.get('country', 'Unknown')
+    
+    if location:
+        latitude, longitude = location.split(',')
+        return latitude, longitude, city, region, country
+    else:
+        return None, None, city, region, country
 
-# Release the webcam and close the window
-cap.release()
-cv2.destroyAllWindows()
+def create_maps_link(latitude, longitude):
+    return f"https://www.google.com/maps?q={latitude},{longitude}&t=k"
+
+def send_sos_email(sender_email, mail_password, receiver_email, location_info):
+    msg = EmailMessage()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = "SOS Alert"
+
+    latitude, longitude, city, region, country = location_info
+    if latitude and longitude:
+        maps_link = create_maps_link(latitude, longitude)
+        body = f"""
+        SOS Alert!
+        My current location is:
+        Latitude: {latitude}
+        Longitude: {longitude}
+        City: {city}
+        Region: {region}
+        Country: {country}
+        Google Maps: {maps_link}
+        """
+    else:
+        body = f"""
+        SOS Alert!
+        Unable to fetch the exact location.
+        City: {city}
+        Region: {region}
+        Country: {country}
+        """
+
+    msg.set_content(body)
+
+    with SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(sender_email, mail_password)
+        smtp.send_message(msg)
+        print("SOS email sent successfully.")
+
+SENDER_EMAIL = 'useexample73@gmail.com'
+MAIL_PASSWORD = 'ldwh xsrc vznm lilo'
+    
+print("Triggering SOS...")
+location_info = get_location_from_ip(IP_ADDRESS)
+print(f"Location obtained: {location_info}")
+send_sos_email(SENDER_EMAIL, MAIL_PASSWORD, '03aayush10@gmail.com', location_info)

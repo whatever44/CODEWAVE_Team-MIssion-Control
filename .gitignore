@@ -71,6 +71,7 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+
 # PyBuilder
 .pybuilder/
 target/
@@ -119,6 +120,11 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+CODEWAVE_Team-Mission-Control/
+Logs/
+old/
+*.h5
+.task
 
 # Spyder project settings
 .spyderproject
