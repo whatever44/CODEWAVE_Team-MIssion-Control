@@ -3,74 +3,9 @@ import numpy as np
 import mediapipe as mp
 from tensorflow.keras.models import load_model
 import streamlit as st
+import time
 import subprocess
-  # For running external scripts
-import requests
-from email.message import EmailMessage
-from smtplib import SMTP_SSL
-
-IPINFO_TOKEN = '0cf1b52c906317'
-
-IP_ADDRESS = '27.34.49.83'
-
-def get_location_from_ip(ip_address):
-    url = f"https://ipinfo.io/{ip_address}?token={IPINFO_TOKEN}"
-    response = requests.get(url)
-    data = response.json()
-    
-    location = data.get('loc', '')
-    city = data.get('city', 'Unknown')
-    region = data.get('region', 'Unknown')
-    country = data.get('country', 'Unknown')
-    
-    if location:
-        latitude, longitude = location.split(',')
-        return latitude, longitude, city, region, country
-    else:
-        return None, None, city, region, country
-
-def create_maps_link(latitude, longitude):
-    return f"https://www.google.com/maps?q={latitude},{longitude}&t=k"
-
-def send_sos_email(sender_email, mail_password, receiver_email, location_info):
-    msg = EmailMessage()
-    msg["From"] = sender_email
-    msg["To"] = receiver_email
-    msg["Subject"] = "SOS Alert"
-
-    latitude, longitude, city, region, country = location_info
-    if latitude and longitude:
-        maps_link = create_maps_link(latitude, longitude)
-        body = f"""
-        SOS Alert!
-        My current location is:
-        Latitude: {latitude}
-        Longitude: {longitude}
-        City: {city}
-        Region: {region}
-        Country: {country}
-        Google Maps: {maps_link}
-        """
-    else:
-        body = f"""
-        SOS Alert!
-        Unable to fetch the exact location.
-        City: {city}
-        Region: {region}
-        Country: {country}
-        """
-
-    msg.set_content(body)
-
-    with SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(sender_email, mail_password)
-        smtp.send_message(msg)
-        print("SOS email sent successfully.")
-
-SENDER_EMAIL = 'useexample73@gmail.com'
-MAIL_PASSWORD = 'ldwh xsrc vznm lilo'
-    
-location_info = get_location_from_ip(IP_ADDRESS)
+import os  # For running external scripts
 
 # Load pre-trained model
 model = load_model('action.h5')
@@ -151,18 +86,9 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
             # Check if the model predicts 'sos'
             if sentence and sentence[-1] == 'sos':
                 # Run the external script code2.py
-                send_sos_email(SENDER_EMAIL, MAIL_PASSWORD, '03aayush10@gmail.com', location_info)  # Make sure the path to code2.py is correct
+                subprocess.run(["python", "code2.py"])  # Make sure the path to code2.py is correct
                 
-                cap.release()
-                cv2.destroyAllWindows()
                 # Display 'SOS' in red text
-                break
-             # Display for 1 second
-
-            else:
-                # Display other actions or nothing
-                cv2.putText(image, ' '.join(sentence), (10, 40), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
         # Display the image in Streamlit app
         FRAME_WINDOW.image(image)
