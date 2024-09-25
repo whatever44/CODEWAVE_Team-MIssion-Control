@@ -60,8 +60,8 @@ def send_sos_email(sender_email, mail_password, receiver_email, location_info):
         smtp.send_message(msg)
         print("SOS email sent successfully.")
 
-SENDER_EMAIL = 'useexample73@gmail.com'
-MAIL_PASSWORD = 'ldwh xsrc vznm lilo'
+SENDER_EMAIL = #gmail
+MAIL_PASSWORD = #'Account pass key'
     
 print("Triggering SOS...")
 location_info = get_location_from_ip(IP_ADDRESS)
